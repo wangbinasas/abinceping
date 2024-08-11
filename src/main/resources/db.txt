@@ -1,0 +1,1 @@
+{"id":1,"questionUrl":"https://i.gsxcdn.com/2513822660_92s67mwi.jpg","buttonList":[{"id":1,"title":"天空","answer":"你的性格简单直白，做事不喜欢拐弯抹角。"},{"id":2,"title":"亲吻的人","answer":"你是一个很率真的人，向来喜欢活在当下"},{"id":3,"title":"同时看到","answer":"最近你的内心很有压力，让你产生一种倦怠感"}]}
