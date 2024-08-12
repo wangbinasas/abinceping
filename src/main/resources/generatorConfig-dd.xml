@@ -42,8 +42,8 @@
             <property name="enableSubPackages" value="true"/>
         </javaClientGenerator>
 
-<!--        <table tableName="user_work" domainObjectName="UserWorkPO"-->
-<!--               enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"-->
-<!--               enableSelectByExample="false" selectByExampleQueryId="false"/>-->
+        <table tableName="11" domainObjectName="11"
+               enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false"
+               enableSelectByExample="false" selectByExampleQueryId="false"/>
     </context>
 </generatorConfiguration>

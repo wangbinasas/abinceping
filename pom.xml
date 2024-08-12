@@ -97,7 +97,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <configurationFile>${project.basedir}/src/main/resources/generatorConfig.xml</configurationFile>
+                    <configurationFile>src/main/resources/generatorConfig-dd.xml</configurationFile>
                     <verbose>true</verbose>
                     <overwrite>true</overwrite>
                 </configuration>
