@@ -39,7 +39,7 @@ public class AIWorkController {
     @PostMapping(value = "/createAIPicture")
     public R<List<CreateAIWorkResultVO>> createAIPicture(@RequestBody CreateAIWorkRequest req, HttpServletRequest servletRequest) {
         try {
-            String openid = servletRequest.getHeader("openid");
+            String openid = servletRequest.getHeader("x-wx-openid");
             req.setUsername(openid);
             log.info("获得的openId:{}.", openid);
             return aiWorkService.createAIPicture(req);
@@ -58,7 +58,7 @@ public class AIWorkController {
     @PostMapping(value = "/generateWorkShareCode")
     public R<GenerateWorkShareCodeResponse> generateWorkShareCode(@RequestBody GenerateWorkShareCodeRequest req, HttpServletRequest servletRequest) {
         try {
-            String openid = servletRequest.getHeader("openid");
+            String openid = servletRequest.getHeader("x-wx-openid");
             req.setUsername(openid);
             return aiWorkService.generateWorkShareCode(req);
         } catch (BusinessException e) {
@@ -76,7 +76,7 @@ public class AIWorkController {
     @PostMapping(value = "/searchWorkByShareCode")
     public R<SearchWorkByShareCodeResponse> searchWorkByShareCode(@RequestBody SearchWorkByShareCodeRequest req, HttpServletRequest servletRequest) {
         try {
-            String openid = servletRequest.getHeader("openid");
+            String openid = servletRequest.getHeader("x-wx-openid");
             req.setUsername(openid);
             return aiWorkService.searchWorkByShareCode(req);
         } catch (BusinessException e) {
@@ -94,7 +94,7 @@ public class AIWorkController {
     @PostMapping(value = "/getUserInfo")
     public R<GetUserInfoResponse> getUserInfo(@RequestBody GetUserInfoRequest req, HttpServletRequest servletRequest) {
         try {
-            String openid = servletRequest.getHeader("openid");
+            String openid = servletRequest.getHeader("x-wx-openid");
             req.setUsername(openid);
             return aiWorkService.getUserInfo(req);
         } catch (BusinessException e) {
