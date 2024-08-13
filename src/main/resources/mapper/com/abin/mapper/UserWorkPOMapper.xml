@@ -34,6 +34,10 @@
         from user_work
         where user_name = #{username,jdbcType=VARCHAR}
     </select>
+    <select id="selectByWorkContent" resultMap="BaseResultMap"
+            parameterType="java.lang.String">
+        select * from user_work where work_content = #{workContent,jdbcType=VARCHAR};
+    </select>
 
     <insert id="batchInsert" parameterType="map">
         insert into user_work

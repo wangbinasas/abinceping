@@ -3,6 +3,7 @@ package com.abin.app.micro_app.service;
 import com.abin.app.micro_app.common.constant.WorkTypeEnum;
 import com.abin.app.micro_app.common.exception.BusinessException;
 import com.abin.app.micro_app.common.exception.InfException;
+import com.abin.app.micro_app.common.util.RateLimiter;
 import com.abin.app.micro_app.model.CreateAIWorkResultVO;
 import com.abin.app.micro_app.model.UserWorkBO;
 import com.abin.app.micro_app.model.request.CreateAIWorkRequest;
@@ -22,9 +23,9 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 @Service
 public class AIWorkService {
 
+    RateLimiter createRateLimiter = new RateLimiter(100);
 
     private static final long DEFAULT_WIDTH = 1170L;
     private static final long DEFAULT_HEIGHT = 2532L;
@@ -58,6 +60,9 @@ public class AIWorkService {
                 || StringUtils.isEmpty(req.getCreateStyle())
                 || StringUtils.isEmpty(req.getUsername())) {
             throw new BusinessException("参数错误");
+        }
+        if (!createRateLimiter.isAllowed(req.getUsername())) {
+            throw new BusinessException("使用过频繁,稍后再试哦～");
         }
         R<List<CreateAIWorkResultVO>> response = R.success();
         String createDesc = req.getCreateDesc();
@@ -89,7 +94,7 @@ public class AIWorkService {
         if (StringUtils.isEmpty(username) || StringUtils.isEmpty(workContent)) {
             throw new BusinessException("参数错误");
         }
-        String shareCode = System.currentTimeMillis() + "" + new Random().nextInt(1000);
+        String shareCode = genShareCode();
         List<UserWorkBO> userWorkBOList = new ArrayList<>();
         UserWorkBO userWorkBO = new UserWorkBO();
         userWorkBO.setUsername(username);
@@ -98,14 +103,39 @@ public class AIWorkService {
         userWorkBO.setShareCode(shareCode);
         userWorkBO.setUseCount(0);
         userWorkBOList.add(userWorkBO);
+        GenerateWorkShareCodeResponse response = new GenerateWorkShareCodeResponse();
+        UserWorkBO historyWorkBO;
+        try {
+            historyWorkBO = userWorkProxy.getWorkByWorkContent(workContent);
+        } catch (InfException e) {
+            throw new BusinessException("查询作品失败.", e);
+        }
+        if (historyWorkBO != null) {
+            response.setShareCode(historyWorkBO.getShareCode());
+            return R.success(response);
+        }
         try {
             userWorkProxy.saveWorks(userWorkBOList);
         } catch (InfException e) {
             throw new BusinessException("生成分享码失败", e);
         }
-        GenerateWorkShareCodeResponse response = new GenerateWorkShareCodeResponse();
         response.setShareCode(shareCode);
         return R.success(response);
+    }
+
+    private String genShareCode() {
+        int length = 10;
+        StringBuilder key = new StringBuilder();
+        SecureRandom random = new SecureRandom();
+        for (int i = 0; i < length; i++) {
+            int randomInt = random.nextInt(36);
+            if (randomInt < 10) {
+                key.append(randomInt);
+            } else {
+                key.append((char) ('a' + (randomInt - 10)));
+            }
+        }
+        return key.toString();
     }
 
     /**

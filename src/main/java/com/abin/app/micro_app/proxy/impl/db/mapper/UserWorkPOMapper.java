@@ -8,6 +8,8 @@ public interface UserWorkPOMapper {
 
     UserWorkPO selectByShareCode(@Param("shareCode") String shareCode);
 
+    UserWorkPO selectByWorkContent(@Param("workContent") String workContent);
+
     void addWorkUseCount(@Param("shareCode") String shareCode);
 
     Integer getUserWorkShareCount(@Param("username") String username);

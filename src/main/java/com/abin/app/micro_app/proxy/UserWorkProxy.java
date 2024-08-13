@@ -23,6 +23,11 @@ public interface UserWorkProxy {
     UserWorkBO getWorkByShareCode(String shareCode) throws InfException;
 
     /**
+     * 根据作品内容获取作品
+     */
+    UserWorkBO getWorkByWorkContent(String workContent) throws InfException;
+
+    /**
      * 添加作品使用数量
      */
     void addWorkUseCount(String shareCode) throws InfException;

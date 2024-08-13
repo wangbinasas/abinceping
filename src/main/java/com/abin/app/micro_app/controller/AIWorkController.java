@@ -41,7 +41,6 @@ public class AIWorkController {
         try {
             String openid = servletRequest.getHeader("x-wx-openid");
             req.setUsername(openid);
-            log.info("获得的openId:{}.", openid);
             return aiWorkService.createAIPicture(req);
         } catch (BusinessException e) {
             log.error("🐸 create ai picture business exception, {}.", req, e);

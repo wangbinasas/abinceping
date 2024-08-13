@@ -98,7 +98,7 @@ public class ImgProxyImpl implements ImgProxy {
     private String buildUrl(String style, String desc, Long width, Long height) {
         String sb = "https://streaming-inference.models.runwayml.cloud/streams-server-queue/gen1/commands/preview_to_url/result.txt?" +
                 "input_text_prompt=" + desc +
-                "&input_seed=" + (System.currentTimeMillis() / 1000 + new Random().nextInt(1000)) +
+                "&input_seed=" + (new Random().nextInt(1000000)) +
                 "&input_mode=" + INPUT_MODE +
                 "&input_style=" + style +
                 "&input_width=" + width +

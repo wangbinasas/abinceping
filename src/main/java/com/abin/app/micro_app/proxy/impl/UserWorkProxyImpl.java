@@ -61,6 +61,22 @@ public class UserWorkProxyImpl implements UserWorkProxy {
     }
 
     @Override
+    public UserWorkBO getWorkByWorkContent(String workContent) throws InfException {
+        if (StringUtils.isEmpty(workContent)) {
+            return null;
+        }
+        try {
+            UserWorkPO userWorkPO = userWorkPOMapper.selectByWorkContent(workContent);
+            if (userWorkPO == null) {
+                return null;
+            }
+            return PoAndBoConverter.po2BO(userWorkPO);
+        } catch (Exception e) {
+            throw new InfException("根据作品值查询作品失败.", e);
+        }
+    }
+
+    @Override
     public void addWorkUseCount(String shareCode) throws InfException {
         if (StringUtils.isEmpty(shareCode)) {
             return;
