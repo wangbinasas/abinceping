@@ -18,4 +18,8 @@ public class JsonUtil {
     public static <T> T fromJson(String json, Class<T> c) {
         return gson.fromJson(json, c);
     }
+
+    public static <T> T deepCopyBean(T t) {
+        return (T) gson.fromJson(gson.toJson(t), t.getClass());
+    }
 }

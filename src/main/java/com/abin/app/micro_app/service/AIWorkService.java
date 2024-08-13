@@ -6,14 +6,8 @@ import com.abin.app.micro_app.common.exception.InfException;
 import com.abin.app.micro_app.common.util.RateLimiter;
 import com.abin.app.micro_app.model.CreateAIWorkResultVO;
 import com.abin.app.micro_app.model.UserWorkBO;
-import com.abin.app.micro_app.model.request.CreateAIWorkRequest;
-import com.abin.app.micro_app.model.request.GenerateWorkShareCodeRequest;
-import com.abin.app.micro_app.model.request.GetUserInfoRequest;
-import com.abin.app.micro_app.model.request.SearchWorkByShareCodeRequest;
-import com.abin.app.micro_app.model.response.GenerateWorkShareCodeResponse;
-import com.abin.app.micro_app.model.response.GetUserInfoResponse;
-import com.abin.app.micro_app.model.response.R;
-import com.abin.app.micro_app.model.response.SearchWorkByShareCodeResponse;
+import com.abin.app.micro_app.model.request.*;
+import com.abin.app.micro_app.model.response.*;
 import com.abin.app.micro_app.proxy.ImgProxy;
 import com.abin.app.micro_app.proxy.TranslateProxy;
 import com.abin.app.micro_app.proxy.UserWorkProxy;
@@ -24,8 +18,10 @@ import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +32,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class AIWorkService {
+
+    private ThreadPoolExecutor createThreadPool = new ThreadPoolExecutor(30, 30, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<>(100));
+
+    Map<String, R<GetCreateProgressResponse>> generatingTasks = Collections.synchronizedMap(new HashMap<>());
 
     RateLimiter createRateLimiter = new RateLimiter(100);
 
@@ -55,34 +55,65 @@ public class AIWorkService {
     /**
      * 创建作品
      */
-    public R<List<CreateAIWorkResultVO>> createAIPicture(CreateAIWorkRequest req) {
+    public R<CreateAIPictureResponse> createAIPicture(CreateAIWorkRequest req) {
         if (StringUtils.isEmpty(req.getCreateDesc())
                 || StringUtils.isEmpty(req.getCreateStyle())
                 || StringUtils.isEmpty(req.getUsername())) {
             throw new BusinessException("参数错误");
         }
         if (!createRateLimiter.isAllowed(req.getUsername())) {
-            throw new BusinessException("使用过频繁,稍后再试哦～");
+            throw new BusinessException("创建过于频繁,请稍后重试哦~");
         }
-        R<List<CreateAIWorkResultVO>> response = R.success();
-        String createDesc = req.getCreateDesc();
-        String createStyle = req.getCreateStyle();
-        String username = req.getUsername();
-        try {
-            createDesc = translateProxy.translateChinese2English(createDesc);
-        } catch (InfException e) {
-            log.error("translate failed {} {}.", username, createDesc, e);
-        }
-        try {
-            List<String> aiImgUrlList = imgProxy.createAIImg(createStyle, createDesc, DEFAULT_WIDTH, DEFAULT_HEIGHT);
-            if (!CollectionUtils.isEmpty(aiImgUrlList)) {
-                response.setData(new ArrayList<>(aiImgUrlList.stream().map(CreateAIWorkResultVO::new).collect(Collectors.toList())));
+        //真实提交任务
+        final String taskId = UUID.randomUUID().toString();
+        doSubmitCreateTask(req, taskId);
+        R<CreateAIPictureResponse> res = R.success(new CreateAIPictureResponse());
+        res.getData().setTaskId(taskId);
+        return res;
+    }
+
+    private void doSubmitCreateTask(CreateAIWorkRequest req, String taskId) {
+        R<GetCreateProgressResponse> progressRes = R.success(new GetCreateProgressResponse());
+        progressRes.getData().setVoList(new ArrayList<>());
+        generatingTasks.put(taskId, progressRes);
+        createThreadPool.execute(() -> {
+            String createDesc = req.getCreateDesc();
+            String createStyle = req.getCreateStyle();
+            String username = req.getUsername();
+            try {
+                createDesc = translateProxy.translateChinese2English(createDesc);
+            } catch (InfException e) {
+                log.error("translate failed {} {}.", username, createDesc, e);
+                progressRes.setCode(100);
+                progressRes.setMsg("生成作品失败.");
+                return;
             }
-        } catch (InfException e) {
-            log.error("create img failed {} {} {}.", username, createStyle, createDesc, e);
-            throw new BusinessException("创作作品失败.", e);
+            try {
+                List<String> aiImgUrlList = imgProxy.createAIImg(createStyle, createDesc, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+                if (!CollectionUtils.isEmpty(aiImgUrlList)) {
+                    progressRes.getData().setVoList(new ArrayList<>(aiImgUrlList.stream().map(CreateAIWorkResultVO::new).collect(Collectors.toList())));
+                }
+            } catch (InfException e) {
+                log.error("create img failed {} {} {}.", username, createStyle, createDesc, e);
+                progressRes.setCode(100);
+                progressRes.setMsg("生成作品失败.");
+            }
+        });
+    }
+
+    /**
+     * 获取创建进度
+     */
+    public R<GetCreateProgressResponse> getCreateProgress(GetCreateProgressRequest req) {
+        String taskId = req.getTaskId();
+        if (StringUtils.isEmpty(taskId)) {
+            throw new BusinessException("参数错误");
         }
-        return response;
+        R<GetCreateProgressResponse> progressR = generatingTasks.get(taskId);
+        if (progressR == null) {
+            throw new BusinessException("找不到任务");
+        }
+        return progressR;
     }
 
     /**
@@ -187,5 +218,9 @@ public class AIWorkService {
      */
     public void refreshToken(String token) {
         imgProxy.setToken(token);
+    }
+
+    public Integer getTaskCount() {
+        return generatingTasks.size();
     }
 }

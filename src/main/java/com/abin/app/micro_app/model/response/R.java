@@ -36,4 +36,8 @@ public class R<T> {
         r.setData(data);
         return r;
     }
+
+    public boolean isFailed() {
+        return this.getCode() == 100;
+    }
 }

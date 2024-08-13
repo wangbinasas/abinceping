@@ -69,7 +69,7 @@ public class ImgProxyImpl implements ImgProxy {
                         result.add(imgUrl);
                         log.info("create img success {} {} {}.", style, desc, imgUrl);
                     } else {
-                        log.error("🆘 create img failed. {} {} {}", style, desc, response.code());
+                        log.error("🆘 create img failed. {} {} {} {}", style, desc, response.code(), response.body().string());
                         throw new RuntimeException("创作失败,Token过期");
                     }
                 } catch (IOException e) {

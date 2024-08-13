@@ -1,15 +1,8 @@
 package com.abin.app.micro_app.controller;
 
 import com.abin.app.micro_app.common.exception.BusinessException;
-import com.abin.app.micro_app.model.CreateAIWorkResultVO;
-import com.abin.app.micro_app.model.request.CreateAIWorkRequest;
-import com.abin.app.micro_app.model.request.GenerateWorkShareCodeRequest;
-import com.abin.app.micro_app.model.request.GetUserInfoRequest;
-import com.abin.app.micro_app.model.request.SearchWorkByShareCodeRequest;
-import com.abin.app.micro_app.model.response.GenerateWorkShareCodeResponse;
-import com.abin.app.micro_app.model.response.GetUserInfoResponse;
-import com.abin.app.micro_app.model.response.R;
-import com.abin.app.micro_app.model.response.SearchWorkByShareCodeResponse;
+import com.abin.app.micro_app.model.request.*;
+import com.abin.app.micro_app.model.response.*;
 import com.abin.app.micro_app.service.AIWorkService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -17,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 /**
  * @Author: Wangbin02
@@ -37,7 +29,7 @@ public class AIWorkController {
      * 创建作品
      */
     @PostMapping(value = "/createAIPicture")
-    public R<List<CreateAIWorkResultVO>> createAIPicture(@RequestBody CreateAIWorkRequest req, HttpServletRequest servletRequest) {
+    public R<CreateAIPictureResponse> createAIPicture(@RequestBody CreateAIWorkRequest req, HttpServletRequest servletRequest) {
         try {
             String openid = servletRequest.getHeader("x-wx-openid");
             req.setUsername(openid);
@@ -47,6 +39,24 @@ public class AIWorkController {
             return R.fail(e.getMsg());
         } catch (Exception e) {
             log.error("❌ create ai picture error, {}.", req, e);
+            return R.fail("网络异常,请稍后重试");
+        }
+    }
+
+    /**
+     * 创建作品
+     */
+    @PostMapping(value = "/getCreateProgress")
+    public R<GetCreateProgressResponse> getCreateProgress(@RequestBody GetCreateProgressRequest req, HttpServletRequest servletRequest) {
+        try {
+            String openid = servletRequest.getHeader("x-wx-openid");
+            req.setUsername(openid);
+            return aiWorkService.getCreateProgress(req);
+        } catch (BusinessException e) {
+            log.error("🐸 get create progress business exception, {}.", req, e);
+            return R.fail(e.getMsg());
+        } catch (Exception e) {
+            log.error("❌ get create progress error, {}.", req, e);
             return R.fail("网络异常,请稍后重试");
         }
     }
@@ -115,5 +125,13 @@ public class AIWorkController {
         }
         aiWorkService.refreshToken(token);
         return "success";
+    }
+
+    /**
+     * 获取任务量
+     */
+    @GetMapping("/getCreateSize")
+    public String getCreateSize() {
+        return aiWorkService.getTaskCount().toString();
     }
 }

@@ -9,10 +9,17 @@ import lombok.Data;
  */
 @Data
 public class CreateAIWorkRequest {
+
     /**
      * 用户username
      */
     private String username;
+
+    /**
+     * 任务ID
+     */
+    private String taskId;
+
     /**
      * 创作描述
      */
